@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📺 Мой ТВ Лист</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTW9pIFRWIExpc3QiLCJzaG9ydF9uYW1lIjoiVFYgTGlzdCIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMTIxMjEyIiwidGhlbWVfY29sb3IiOiIjZmY1MjUyIiwiaWNvbnMiOlt7InNyYyI6Imh0dHBzOi8vZW1vamlwYWNrYWdlLmNvbS9pY29ucy90ZWxldmlzaW9uIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=">
+<style>
+  :root {
+    --bg: #121212;
+    --card: #1e1e24;
+    --primary: #ff5252;
+    --accent: #4caf50;
+    --text: #ffffff;
+    --text-dim: #a0a0a0;
+    --input-bg: #2c2c35;
+    --warn: #ff9800;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+    padding-bottom: 100px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 15px;
+    background: linear-gradient(90deg, #ff5252, #ff8a80);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .btn-perm {
+    width: 100%;
+    background: #2196f3;
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    margin-bottom: 15px;
+    cursor: pointer;
+  }
+  .btn-global-mute {    width: 100%;
+    background: #333;
+    color: #ff5252;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ff5252;
+    font-size: 14px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    display: none;
+  }
+  .btn-global-mute.visible { display: block; animation: pulse 1s infinite; }
+
+  .add-form {
+    background: var(--card);
+    padding: 15px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+  .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  input, select, button {
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    outline: none;
+  }
+  input, select {
+    background: var(--input-bg);
+    color: var(--text);
+    flex: 1;
+  }
+  input:focus, select:focus { border: 1px solid var(--primary); }
+  
+  .btn-add {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .btn-add:active { transform: scale(0.98); }
+
+  #shows-list { list-style: none; }
+  .show-item {
+    background: var(--card);
+    padding: 15px;
+    border-radius: 12px;    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid transparent;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .show-item.status-future { border-left-color: #2196f3; }
+  .show-item.status-reminder { 
+    border-left-color: var(--warn); 
+    background: #2e2a1e; 
+    animation: pulse 1.5s infinite; 
+  }
+  .show-item.status-now { border-left-color: var(--accent); background: #1e2e20; }
+  .show-item.status-past { border-left-color: var(--text-dim); opacity: 0.6; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+  .info { display: flex; flex-direction: column; flex: 1; }
+  .show-title { font-size: 17px; font-weight: bold; margin-bottom: 4px; }
+  .show-meta { font-size: 13px; color: var(--text-dim); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .badge { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+  .channel-num { background: #333; color: #fff; padding: 2px 5px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+  
+  .actions { display: flex; gap: 8px; align-items: center; }
+  .btn-silence {
+    background: var(--warn);
+    color: #000;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    animation: pulse 1s infinite;
+  }
+  .btn-del {
+    background: rgba(255,82,82,0.15);
+    color: #ff5252;
+    width: 36px; height: 36px;
+    padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+  }
+
+  .empty-state { text-align: center; color: var(--text-dim); margin-top: 40px; }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; display: block; }
+</style>
+</head>
+<body>
+  <h1>📺 Что хочу посмотреть?</h1>
+  <button id="btn-perm" class="btn-perm">🔔 Включить уведомления (нажми один раз)</button>
+  <button id="btn-global-mute" class="btn-global-mute">🔇 СТОП ЗВУК (нажми если пищит)</button>
+
+  <div class="add-form">
+    <div class="form-row">
+      <input type="text" id="input-title" placeholder="Название (Фильм, Шоу)">
+    </div>
+    <div class="form-row">
+      <input type="number" id="input-ch-num" placeholder="№ канала" style="max-width: 80px;">
+      <input type="text" id="input-channel" placeholder="Название канала">
+      <input type="time" id="input-time">
+    </div>
+    <div class="form-row">
+      <select id="input-reminder">
+        <option value="5">Напомнить за 5 мин</option>
+        <option value="10" selected>Напомнить за 10 мин</option>
+        <option value="15">Напомнить за 15 мин</option>
+        <option value="30">Напомнить за 30 мин</option>
+        <option value="60">Напомнить за 1 час</option>
+      </select>
+    </div>
+    <button class="btn-add" id="btn-add">Добавить в список</button>
+  </div>
+
+  <ul id="shows-list"></ul>
+  
+  <div id="empty-msg" class="empty-state">
+    <span class="empty-icon">📼</span>
+    Пока пусто. Добавь передачу!
+  </div>
+
+  <script>
+    let shows = JSON.parse(localStorage.getItem('my_shows')) || [];
+    const listEl = document.getElementById('shows-list');
+    const emptyMsg = document.getElementById('empty-msg');
+    const globalMuteBtn = document.getElementById('btn-global-mute');
+    
+    // Аудио
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let isGloballyMuted = false;
+    
+    function beep() {
+      if(isGloballyMuted || audioCtx.state === 'suspended') return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.frequency.value = 800;
+      gain.gain.value = 0.3;      osc.start();
+      setTimeout(() => osc.stop(), 150);
+    }
+
+    // Глобальное отключение
+    globalMuteBtn.addEventListener('click', () => {
+      isGloballyMuted = true;
+      globalMuteBtn.style.display = 'none';
+      if(navigator.vibrate) navigator.vibrate(0); // Сброс вибрации
+    });
+
+    // Запрос разрешений
+    document.getElementById('btn-perm').addEventListener('click', () => {
+      if("Notification" in window) {
+        Notification.requestPermission().then(perm => {
+          document.getElementById('btn-perm').style.display = 'none';
+          if(perm === 'granted') alert('✅ Уведомления включены!');
+        });
+      }
+    });
+
+    function saveAndRender() {
+      localStorage.setItem('my_shows', JSON.stringify(shows));
+      renderList();
+    }
+
+    function addShow() {
+      const title = document.getElementById('input-title').value;
+      const channel = document.getElementById('input-channel').value;
+      const chNum = document.getElementById('input-ch-num').value;
+      const time = document.getElementById('input-time').value;
+      const reminder = parseInt(document.getElementById('input-reminder').value);
+
+      if(!title || !time) { alert("Заполни Название и Время!"); return; }
+
+      shows.push({
+        id: Date.now(),
+        title,
+        channel: channel || 'Тв',
+        chNum: chNum || '?',
+        time,
+        reminderMin: reminder,
+        notified: false,
+        silenced: false // Флаг ручного отключения
+      });
+
+      document.getElementById('input-title').value = '';
+      document.getElementById('input-channel').value = '';
+      document.getElementById('input-ch-num').value = '';
+            saveAndRender();
+    }
+
+    function silenceShow(id) {
+      const show = shows.find(s => s.id === id);
+      if(show) {
+        show.silenced = true;
+        saveAndRender();
+      }
+    }
+
+    function deleteShow(id) {
+      if(confirm('Удалить?')) {
+        shows = shows.filter(s => s.id !== id);
+        saveAndRender();
+      }
+    }
+
+    function renderList() {
+      listEl.innerHTML = '';
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      let hasActiveReminder = false;
+
+      shows.sort((a, b) => new Date(`${todayStr}T${a.time}`) - new Date(`${todayStr}T${b.time}`));
+
+      if (shows.length === 0) { emptyMsg.style.display = 'block'; globalMuteBtn.classList.remove('visible'); return; }
+      emptyMsg.style.display = 'none';
+
+      shows.forEach(show => {
+        let showDate = new Date(`${todayStr}T${show.time}`);
+        let diffMs = showDate - now;
+        let statusClass = 'status-future';
+        let timerText = '';
+        let silenceBtn = '';
+
+        if (diffMs < -60000) {
+          statusClass = 'status-past';
+          timerText = 'Прошло';
+        } else if (diffMs >= -60000 && diffMs <= 3600000) {
+          statusClass = 'status-now';
+          timerText = '🟢 Идёт сейчас!';
+        } else {
+          let mins = Math.floor(diffMs / 60000);
+          let hours = Math.floor(mins / 60);
+          timerText = hours > 0 ? `через ${hours} ч ${mins%60} мин` : `через ${mins} мин`;
+        }
+
+        // Логика напоминания
+        const reminderMs = show.reminderMin * 60000;        if (!show.silenced && diffMs > 0 && diffMs <= reminderMs && !show.notified) {
+           show.notified = true;
+           beep();
+           if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+           if(Notification.permission === 'granted') {
+             new Notification(`📺 Скоро: ${show.title}`, {
+               body: `Канал ${show.chNum} (${show.channel}) через ${show.reminderMin} мин`,
+               icon: 'https://emojipackage.com/icons/television'
+             });
+           }
+           localStorage.setItem('my_shows', JSON.stringify(shows));
+           hasActiveReminder = true;
+        }
+
+        if(!show.silenced && show.notified && diffMs > 0 && diffMs <= reminderMs) {
+           statusClass = 'status-reminder';
+           timerText = `🔔 Напоминание!`;
+           silenceBtn = `<button class="btn-silence" onclick="silenceShow(${show.id})">🔕 Откл.</button>`;
+           hasActiveReminder = true;
+        }
+
+        const li = document.createElement('li');
+        li.className = `show-item ${statusClass}`;
+        li.innerHTML = `
+          <div class="info">
+            <span class="show-title">${show.title}</span>
+            <div class="show-meta">
+              <span class="channel-num">CH ${show.chNum}</span>
+              <span class="badge">${show.time}</span>
+              <span>${show.channel}</span>
+              <span>${timerText}</span>
+            </div>
+          </div>
+          <div class="actions">
+            ${silenceBtn}
+            <button class="btn-del" onclick="deleteShow(${show.id})">✕</button>
+          </div>
+        `;
+        listEl.appendChild(li);
+      });
+
+      // Показываем глобальную кнопку тишины, если есть активные напоминания
+      globalMuteBtn.classList.toggle('visible', hasActiveReminder);
+    }
+
+    document.getElementById('btn-add').addEventListener('click', addShow);
+    setInterval(renderList, 5000); // Проверка каждые 5 сек
+    renderList();
+  </script>
+</body></html>
